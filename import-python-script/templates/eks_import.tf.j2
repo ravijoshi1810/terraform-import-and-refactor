@@ -1,0 +1,51 @@
+
+import {
+  to = aws_eks_cluster.{{ cluster_name }}
+  id = "{{ cluster_name }}"
+}
+
+
+{%- for add_on in eks_add_ons %}
+import {
+  to = aws_eks_addon.{{ cluster_name }}-{{ add_on }}
+  id = "{{ cluster_name}}:{{ add_on }}"
+}
+{% endfor -%}
+
+{%- for node_group in node_groups %}
+import {
+  to = aws_eks_node_group.{{ cluster_name }}-{{ node_group.name }}
+  id = "{{ cluster_name }}:{{ node_group.name }}"
+}
+
+{% if  node_group.launch_template != "" %}
+import {
+  to = aws_launch_template.{{ cluster_name }}-{{ node_group.launch_template }}
+  id = "{{ node_group.launch_template }}"
+}
+{% endif %}
+
+{% for asg_name in node_group.asg_names %}
+import {
+  to = aws_autoscaling_group.{{ cluster_name }}-{{ node_group.name }}-{{ asg_name }}
+  id = "{{ asg_name }}"
+}
+{% endfor %}
+
+{%- endfor %}
+
+
+
+{%- for manage_external_asg in manage_external_asgs %}
+
+import {
+  to = aws_launch_template.{{ cluster_name }}-{{ manage_external_asg.launch_template }}
+  id = "{{ manage_external_asg.launch_template }}"
+}
+
+import {
+  to = aws_autoscaling_group.{{ cluster_name }}-{{ manage_external_asg.asg_name }}
+  id = "{{ manage_external_asg.asg_name }}"
+}
+{% endfor %}
+

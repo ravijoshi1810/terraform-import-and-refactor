@@ -1,0 +1,97 @@
+{% if is_cluster == 'true' %}
+
+import {
+  to = aws_rds_cluster.{{ rds_cluster_identifier }}
+  id = "{{ rds_cluster_identifier }}"
+}
+
+{%- if 'default.' not in cluster_parameter %}
+import {
+  to = aws_rds_cluster_parameter_group.{{ rds_cluster_identifier }}
+  id = "{{ cluster_parameter }}"
+}
+{% endif -%}
+
+{% if kms_key_id != "" %}
+import {
+  to = aws_kms_key.{{ rds_cluster_identifier }}
+  id = "{{ kms_key_id }}"
+}
+{% endif -%}
+
+
+{% for db_instance in cluster_instances %}
+{% if is_aurora == 'true' %}
+import {
+  to = aws_rds_cluster_instance.{{ db_instance.instance_identifier }}
+  id = "{{ db_instance.instance_identifier }}"
+}
+{% else %}
+import {
+  to = aws_db_instance.{{ db_instance.instance_identifier }}
+  id = "{{ db_instance.instance_identifier }}"
+}
+{% endif %}
+
+{% for db_parameter_group in db_instance.db_parameter_group %}
+{%- if 'default.' not in db_parameter_group %}
+
+import {
+  to = aws_db_parameter_group.{{ db_instance.instance_identifier }}_{{ db_parameter_group }}
+  id = "{{ db_parameter_group }}"
+}
+
+{% endif %}
+{% endfor %}
+
+{% for option_group in db_instance.option_groups %}
+{%- if 'default:' not in option_group %}
+
+import {
+  to = aws_db_option_group.{{ db_instance.instance_identifier }}_{{ db_parameter_group }}
+  id = "{{ db_parameter_group }}"
+}
+
+{% endif %}
+{% endfor %}
+
+{% endfor -%}
+{% endif %}
+
+
+{% if is_aurora == 'false' and is_cluster == 'false' %}
+
+import {
+  to = aws_db_instance.{{ instance_identifier }}
+  id = "{{ instance_identifier }}"
+}
+
+
+{% if kms_key_id != "" %}
+import {
+  to = aws_kms_key.{{ instance_identifier }}
+  id = "{{ kms_key_id }}"
+}
+{% endif -%}
+
+
+{% for option_group in option_groups %}
+{%- if 'default:' not in option_group %}
+import {
+  to = aws_db_option_group.{{ instance_identifier }}_instance_{{ loop.index }}_{{ option_group }}
+  id = "{{ option_group }}"
+}
+{% endif %}
+{% endfor -%}
+
+{% for db_param_group in db_parameter_groups %}
+{%- if 'default.' not in db_param_group %}
+
+import {
+  to = aws_db_parameter_group.{{ instance_identifier }}_{{ loop.index }}_{{ db_param_group }}
+  id = "{{ db_param_group }}"
+}
+{% endif %}
+{% endfor %}
+{% endif %}
+
